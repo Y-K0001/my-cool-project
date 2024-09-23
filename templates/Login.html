@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Responsive Login Page</title>
+    <!-- Google Fonts: Josefin Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* ใช้ฟอนต์ Josefin Sans */
+        body {
+            font-family: 'Josefin Sans', sans-serif;
+            background-color: #eceef0;
+        }
+
+        /* Navbar Styling */
+        .navbar-brand, .nav-link {
+            font-size: 28px;
+            font-weight: 400;
+            color: #ff0000;
+        }
+
+        .navbar {
+            background-color: #000000;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        /* เพิ่มระยะห่างระหว่าง Navbar กับเนื้อหา */
+        .container {
+            margin-top: 8rem;
+        }
+
+        /* Card Styling */
+        .card-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .card {
+            padding: 2rem;
+            background-color: #fefdfd;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            font-size: 1.2rem;
+            border: 1px solid #000000;
+        }
+
+        .btn-primary {
+            background-color: #37c357;
+            border-color: #36c056;
+        }
+
+        .btn-primary:hover {
+            background-color: #075318;
+            border-color: #0a4518;
+        }
+
+        /* Password Toggle Icon */
+        .password-toggle i {
+            font-size: 1.5rem;
+            color: #000000;
+        }
+
+        /* ปรับให้เป็น Responsive สำหรับหน้าจอเล็ก */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 22px;
+            }
+
+            .container {
+                margin-top: 5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .form-control {
+                font-size: 1rem;
+            }
+
+            .btn-primary {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+        }
+
+        /* ปรับให้พอดีกับหน้าจอใหญ่ */
+        @media (min-width: 769px) {
+            .navbar-brand {
+                font-size: 28px;
+            }
+
+            .card {
+                padding: 3rem;
+            }
+
+            .card-title {
+                font-size: 2rem;
+            }
+
+            .form-control {
+                font-size: 1.2rem;
+            }
+
+            .btn-primary {
+                font-size: 1.2rem;
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">OEM SCARP</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo03" aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <!-- Links can be added here -->
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Login Form inside Card with Password Show/Hide -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">Login</h2>
+                        <form>
+                            <div class="form-group">
+                                <label for="username">Account_ID</label>
+                                <input type="tel" class="form-control" id="username" placeholder="Enter your account number" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text password-toggle" onclick="togglePassword()">
+                                            <i class="fas fa-eye"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (jQuery and Popper.js) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- JavaScript for toggling password visibility -->
+    <script>
+        function togglePassword() {
+            var passwordField = document.getElementById("password");
+            var passwordToggle = document.querySelector(".password-toggle i");
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                passwordToggle.classList.remove("fa-eye");
+                passwordToggle.classList.add("fa-eye-slash");
+            } else {
+                passwordField.type = "password";
+                passwordToggle.classList.remove("fa-eye-slash");
+                passwordToggle.classList.add("fa-eye");
+            }
+        }
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OEM SCARP</title>
+
+    <!-- Google Font: Josefin Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Josefin Sans', sans-serif;
+            background-color: #eceef0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+        }
+        nav {
+            width: 100vw; /* ใช้ 100% ของความกว้างหน้าจอ */
+            background-color: #000000;
+            padding: 20px 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            margin: 0;
+            box-sizing: border-box; /* ช่วยให้คำนวณขนาดรวม padding */
+        }
+
+        .navbar-brand {
+            font-size: 28px;
+            color: #ff0000;
+            margin-left: 20px;
+            text-decoration: none;
+            font-weight: 400;
+        }
+
+        /* Content section */
+        .content {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 100px; /* ให้แน่ใจว่า content ไม่ทับกับ navbar */
+            padding: 20px;
+        }
+
+        /* Form Styling */
+        .form-group {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .form-group label {
+            font-size: 18px;
+            margin-right: 10px;
+            flex: 0 0 150px;
+            text-align: left;
+        }
+
+        .form-group select, .form-group input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid black;
+            border-radius: 4px;
+            max-width: 400px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+            border: 2px solid #000;
+        }
+        
+        table th, table td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid black;
+            vertical-align: middle; /* จัดกึ่งกลางแนวตั้งของข้อความ */
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        
+        td input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: none;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        td {
+            min-width: 150px; /* กำหนดความกว้างขั้นต่ำ */
+            word-wrap: break-word; /* ให้ข้อความแสดงในหลายบรรทัด */
+            overflow: visible; /* แสดงข้อความทั้งหมด */
+        }
+
+        /* Button styling */
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            color: white;
+            background-color: #333;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 4px;
+        }
+
+        .button-group button:hover {
+            background-color: #555;
+        }
+
+        /* Responsive design adjustments */
+        @media (max-width: 768px) {
+            table th, table td {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .navbar-brand {
+                font-size: 22px; /* ลดขนาดฟอนต์บนมือถือ */
+            }
+
+            .form-group label {
+                font-size: 16px;
+                flex: 0 0 120px; /* ลดขนาดสำหรับหน้าจอเล็ก */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <a class="navbar-brand" href="#">OEM SCARP</a>
+    </nav>
+
+    <div class="content">
+        <!-- Production Line Dropdown -->
+        <div class="form-group">
+            <label for="productionLine">Production Line:</label>
+            <select class="form-control" id="productionLine" name="productionLine">
+                <option value="" selected>Choose a production line</option>
+                <option value="Hisense 1">Hisense 1</option>
+                <option value="Hisense 2">Hisense 2</option>
+                <option value="Hisense 3">Hisense 3</option>
+            </select>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PART NO.</th>
+                        <th>PART NUMBER</th>
+                        <th>QTY</th>
+                        <th>CAUSE</th>
+                        <th>TYPE</th>
+                        <th>NUMBER SCARP</th>
+                        <th>DATE & TIME</th>
+                    </tr>
+                </thead>
+                <tbody id="scarpTableBody">
+                    <!-- Rows will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Button Group -->
+        <div class="button-group">
+            <button type="button" id="editBtn">Add</button>
+            <button type="button" id="saveBtn">Save</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to load and display data from Local Storage
+        function loadTableData() {
+            const storedData = JSON.parse(localStorage.getItem('formDataArray')) || [];
+            const tableBody = document.getElementById('scarpTableBody');
+            tableBody.innerHTML = ''; // Clear the table body before inserting new rows
+
+            storedData.forEach((data, index) => {
+                const scarpNumber = `Scarp-${(index + 1).toString().padStart(2, '0')}`;
+                const row = `<tr>
+                                <td>${data.partNumber}</td>
+                                <td>${data.partName}</td>
+                                <td>${data.qty}</td>
+                                <td>${data.cause}</td>
+                                <td>${data.dropdownCause}</td>
+                                <td>${scarpNumber}</td>
+                                <td>${data.dateTime}</td>
+                                <td>${edit(data, info_edit)}<td/>
+                            </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        // Function to get current date and time in the format "YYYY-MM-DD HH:mm:ss"
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // When the page is loaded, show data in table
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTableData();
+        });
+
+        // Save new data to Local Storage and update table
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            if (confirm('คุณต้องการบันทึกข้อมูลหรือไม่?')) {
+                const partNumber = document.getElementById('partNumber') ? document.getElementById('partNumber').value : '';
+                const partName = document.getElementById('partName') ? document.getElementById('partName').value : '';
+                const qty = document.getElementById('qty') ? document.getElementById('qty').value : '';
+                const cause = document.getElementById('cause') ? document.getElementById('cause').value : '';
+                const dropdownCause = document.getElementById('dropdownCause') ? document.getElementById('dropdownCause').value : '';
+                const timestamp = getCurrentDateTime(); // Get the current date and time
+
+                let storedData = JSON.parse(localStorage.getItem('formDataArray')) || [];
+
+                const formData = {
+                    partNumber,
+                    partName,
+                    qty,
+                    cause,
+                    dropdownCause,
+                    timestamp // Add timestamp to the data
+                };
+                storedData.push(formData);
+
+                localStorage.setItem('formDataArray', JSON.stringify(storedData));
+
+                loadTableData(); // Reload the table after saving
+
+                // Redirect to next page after saving
+                window.location.href = '/nextpage.html'; // Make sure the path to nextpage.html is correct
+            } else {
+                alert('การบันทึกถูกยกเลิก');
+            }
+        });
+
+        // ปุ่มแก้ไข (เปลี่ยนหน้าไปยัง index.html)
+        document.getElementById('editBtn').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection with YOLO and Realtime Camera</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Google Fonts: Josefin Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Josefin Sans', sans-serif;
+            background-color: #eceef0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 24px;
+            
+        }
+
+        /* Navbar full-width */
+        nav {
+            width: 100%;
+            background-color: #000000; /* สีพื้นหลังดำ */
+            position: fixed;
+            top: 0;
+            z-index: 1000; /* ให้อยู่ด้านบน */
+        }
+
+        /* เพิ่มขนาดฟอนต์ใน Navbar และเปลี่ยนสีตัวอักษรเป็นสีแดง */
+        .navbar-brand, .nav-link {
+            font-size: 28px; /* ปรับขนาดฟอนต์ */
+            color: #FF0000 !important; /* เปลี่ยนสีของฟอนต์เป็นสีแดง */
+        }
+
+        /* ปรับขนาดฟอนต์และองค์ประกอบอื่น ๆ สำหรับหน้าจอขนาดเล็ก */
+        @media (max-width: 768px) {
+            .navbar-brand { 
+                font-size: 22px;
+                position: fixed
+            }
+            h1 {
+                font-size: 20px;
+            }
+            #videoElement, #capturedImage {
+                width: 100%;
+                height: auto;
+            }
+        }
+
+        /* Container and buttons styling */
+        #container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 90%;
+            margin-top: 20px;
+           
+        }
+
+        #left-side, #right-side {
+            margin-bottom: 20px;
+        }
+
+        #captureBtn, #refreshBtn, #saveBtn {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            text-align: center; /* จัดปุ่มให้อยู่ตรงกลาง */
+        }
+
+        #refreshBtn {
+            background-color: #f44336; /* ปุ่ม refresh สีแดง */
+        }
+
+        #saveBtn {
+            background-color: #008CBA; /* ปุ่มบันทึกข้อมูลสีน้ำเงิน */
+        }
+
+        #result {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">OEM SCARP</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo03" aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <!-- Add your links here -->
+            </ul>
+        </div>
+    </nav>
+
+    <h1>Object Detection</h1>
+
+    <div id="container" class="container">
+        <div id="left-side" class="row">
+            <div class="col-lg-6 col-md-12">
+                <h3>Camera Feed / Captured Image:</h3>
+                <img id="videoElement" src="{{ url_for('video_feed') }}" alt="Video Stream">
+                <img id="capturedImage" src="" alt="Captured Image">
+                <button id="captureBtn" class="btn btn-success">Capture Image</button>
+                <button id="refreshBtn" class="btn btn-danger" style="display: none;">Refresh Camera</button>
+            </div>
+        </div>
+
+        <div id="right-side" class="row">
+            <div class="col-lg-6 col-md-12">
+                <div id="result">
+                    <h3>Captured Image with Detected Objects:</h3>
+                    <ul id="detectedObjects"></ul>
+                </div>
+
+                <div id="form">
+                    <div class="form-group">
+                        <label for="partNumber">Part Number:</label>
+                        <input type="text" id="partNumber" name="partNumber" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="partName">Part Name:</label>
+                        <input type="text" id="partName" name="partName" readonly>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label><input type="radio" name="cause" value="Ass"> Ass</label>
+                        <label><input type="radio" name="cause" value="Store"> Store</label>
+                        <label><input type="radio" name="cause" value="Man"> Man</label>
+                        <label><input type="radio" name="cause" value="Machine"> Machine</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dropdownCause">Cause:</label>
+                        <select id="dropdownCause" name="dropdownCause">
+                            <option value="default" disabled selected>Select cause</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qty">QTY:</label>
+                        <input type="number" id="qty" name="qty" min="0" placeholder="Enter quantity">
+                    </div>
+
+                    <div class="button-group">
+                        <button id="saveBtn" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // เมื่อเลือก Radio button, จะแสดงตัวเลือกที่เกี่ยวข้องใน Dropdown
+            $('input[name="cause"]').on('change', function() {
+                const selectedCause = $(this).val();
+                const dropdownCause = $('#dropdownCause');
+
+                dropdownCause.empty(); // ล้างตัวเลือกที่มีอยู่
+
+                if (selectedCause === 'Ass') {
+                    dropdownCause.append(new Option('เข้าไลน์', 'เข้าไลน์'));
+                    dropdownCause.append(new Option('ตกจากไลน์', 'ตกจากไลน์'));
+                } else if (selectedCause === 'Store') {
+                    dropdownCause.append(new Option('เสียหายจากการขนส่ง', 'เสียหายจากการขนส่ง'));
+                } else if (selectedCause === 'Man') {
+                    dropdownCause.append(new Option('ยิงแฉลบ', 'ยิงแฉลบ'));
+                    dropdownCause.append(new Option('ฉีกขาด', 'ฉีกขาด'));
+                } else if (selectedCause === 'Machine') {
+                    dropdownCause.append(new Option('ทำร่วง', 'ทำร่วง'));
+                    dropdownCause.append(new Option('ตกหล่น', 'ตกหล่น'));
+                    dropdownCause.append(new Option('ฉีกขาด', 'ฉีกขาด'));
+                }
+            });
+
+            // Capture Image button click
+            $('#captureBtn').click(function() {
+                $.ajax({
+                    url: '/capture',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Hide video feed and show captured image
+                            $('#videoElement').hide();  
+                            $('#capturedImage').attr('src', '/static/captured_images/' + response.filename).show();
+
+                            // Show the Refresh button
+                            $('#refreshBtn').show();
+
+                            // Clear previous detected objects
+                            $('#detectedObjects').empty();
+
+                            // Loop through detected objects and add them to the list
+                            response.objects.forEach(function(object) {
+                                $('#detectedObjects').append(
+                                    '<li>Part No: ' + object.part_no + 
+                                    ' - Name: ' + object.name + 
+                                    ' (Confidence: ' + object.confidence + ')</li>'
+                                );
+                                
+                                // Autofill part number and name
+                                $('#partNumber').val(object.part_no);
+                                $('#partName').val(object.name);
+                            });
+                        } else {
+                            alert('Failed to capture image.');
+                        }
+                    },
+                    error: function() {
+                        alert('Error capturing image.');
+                    }
+                });
+            });
+
+            // Refresh Camera button click
+            $('#refreshBtn').click(function() {
+                // Hide captured image and refresh video feed
+                $('#capturedImage').hide();  
+                const newSrc = '{{ url_for("video_feed") }}' + '?t=' + new Date().getTime();  // Add timestamp to prevent caching
+                $('#videoElement').attr('src', newSrc).show();  // Show video stream with updated src
+                $('#refreshBtn').hide();  // Hide the refresh button
+
+                // Clear form fields
+                $('#partNumber').val('');  // Clear Part Number
+                $('#partName').val('');    // Clear Part Name
+                $('input[name="cause"]').prop('checked', false);  // Uncheck radio buttons
+                $('#dropdownCause').val('default');  // Reset dropdown to default
+                $('#qty').val('');  // Clear QTY field
+
+                // Clear detected objects
+                $('#detectedObjects').empty();
+            });
+
+            // Save button click
+            $('#saveBtn').click(function() {
+                // Validate form fields
+                const partNumber = $('#partNumber').val();
+                const partName = $('#partName').val();
+                const cause = $('input[name="cause"]:checked').val();
+                const dropdownCause = $('#dropdownCause').val();
+                const qty = $('#qty').val();
+                const currentDateTime = new Date().toLocaleString(); // เพิ่มการดึงวันที่และเวลาปัจจุบัน
+                
+                if (!partNumber || !partName || !cause || dropdownCause === 'default' || !qty) {
+                    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+                    return;  // หยุดการทำงานถ้า validation ไม่ผ่าน
+                }
+
+                // Show confirmation dialog
+                if (confirm('คุณต้องการบันทึกข้อมูลหรือไม่?')) {
+                    // If confirmed, save data to localStorage
+                    const formData = {
+                        partNumber: partNumber,
+                        partName: partName,
+                        cause: cause,
+                        dropdownCause: dropdownCause,
+                        qty: qty,
+                        dateTime: currentDateTime // บันทึกวันที่และเวลา
+                    };
+
+                    // Save form data to localStorage
+                    let formDataArray = JSON.parse(localStorage.getItem('formDataArray')) || [];
+                    formDataArray.push(formData);
+                    localStorage.setItem('formDataArray', JSON.stringify(formDataArray));
+
+                    // เปลี่ยนหน้าไปหน้าถัดไป
+                    window.location.href = 'data.html';  // เปลี่ยน URL เป็นหน้าถัดไป
+                } else {
+                    alert('กรุณาแก้ไขข้อมูลของคุณ');
+                }
+            });
+            
+        });
+    </script>
+</body>
+</html>

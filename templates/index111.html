@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Form</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Google Fonts: Josefin Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Josefin Sans', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .navbar {
+            background-color: #000000;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        /* เพิ่มขนาดฟอนต์ใน Navbar */
+        .navbar-brand, .nav-link {
+            font-size: 28px; /* ปรับขนาดฟอนต์ของ Navbar */
+            color: #ff0000; /* เปลี่ยนสีของฟอนต์เป็นสีขาว */
+        }
+
+        .form-container {
+            margin-top: 150px; /* เพิ่มระยะห่างระหว่างฟอร์มและ Navbar */
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .form-group label {
+            font-size: 20px;
+        }
+
+        .form-group .form-control {
+            font-size: 16px;
+        }
+
+        .button-group {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* ปรับขนาดปุ่มให้พอเหมาะ */
+        .button-group button {
+            font-size: 18px;
+            padding: 10px 30px;  /* เพิ่ม padding ให้ปุ่มดูสมดุล */
+            width: auto;  /* ขนาดปุ่มปรับตามเนื้อหา */
+            max-width: 250px;  /* กำหนดความกว้างสูงสุดของปุ่ม */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">OEM SCARP</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo03" aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <li class="nav-item active">
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="form-container">
+        <!-- Production Line Dropdown -->
+        <div class="form-group">
+            <label for="productionLine">Production Line:</label>
+            <select class="form-control" id="productionLine" name="productionLine" onchange="loadBatchNo()">
+                <option value="" selected>Select line</option> <!-- Default option -->
+                <option value="Hisense 1">Hisense 1</option>
+                <option value="Hisense 2">Hisense 2</option>
+                <option value="Hisense 3">Hisense 3</option>
+            </select>
+        </div>
+
+        <!-- Batch No Dropdown -->
+        <div class="form-group">
+            <label for="batchNo">Batch No:</label>
+            <select class="form-control" id="batchNo" name="batchNo" onchange="updateModel()" disabled>
+                <option value="" selected>Select Batch</option> <!-- Default Batch No option -->
+            </select>
+        </div>
+
+        <!-- Model (Line) -->
+        <div class="form-group">
+            <label for="model">Model:</label>
+            <input type="text" class="form-control" id="model" name="model" readonly>
+        </div>
+
+        <!-- Button Group for Save -->
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="saveData()">Save</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Script to load Top 3 Batch No and update Model -->
+    <script>
+        // Data for Batch No and corresponding Model from the Excel file
+        const batchData = {
+            "Hisense 1": [
+                { "batchNo": "KAE41", "model": "HAP0824TWD" },
+                { "batchNo": "KAE42", "model": "HAP0824TWD" },
+                { "batchNo": "KAD2B", "model": "HAP0824TWD" }
+            ],
+            "Hisense 2": [
+                { "batchNo": "KAE43", "model": "HAP0824TWD" },
+                { "batchNo": "KAE44", "model": "HAP0824TWD" },
+                { "batchNo": "KAD2C", "model": "HAP0824TWD" }
+            ],
+            "Hisense 3": [
+                { "batchNo": "KAE45", "model": "HAP0824TWD" },
+                { "batchNo": "KAE46", "model": "HAP0824TWD" },
+                { "batchNo": "KAD2D", "model": "HAP0824TWD" }
+            ]
+        };
+
+        // Function to populate Batch No options from the selected production line
+        function loadBatchNo() {
+            const productionLineSelect = document.getElementById('productionLine');
+            const batchNoSelect = document.getElementById('batchNo');
+            const selectedLine = productionLineSelect.value;
+
+            // Clear previous Batch No options
+            batchNoSelect.innerHTML = '<option value="" selected>Select Batch</option>'; // Reset Batch No with "Select Batch" as default
+
+            // Disable the Batch No dropdown until a line is selected
+            if (selectedLine === '') {
+                batchNoSelect.disabled = true;
+                document.getElementById('model').value = '';  // Clear model input if no line selected
+                return;
+            } else {
+                batchNoSelect.disabled = false; // Enable Batch No dropdown
+            }
+
+            // Get top 3 batches for the selected production line
+            const topBatches = batchData[selectedLine].slice(0, 3);
+
+            // Populate Batch No dropdown
+            topBatches.forEach(batch => {
+                const option = document.createElement('option');
+                option.value = batch.batchNo;
+                option.textContent = batch.batchNo;
+                batchNoSelect.appendChild(option);
+            });
+
+            // Update the model field for the first Batch No initially
+            updateModel();
+        }
+
+        // Function to update Model based on selected Batch No
+        function updateModel() {
+            const productionLineSelect = document.getElementById('productionLine');
+            const batchNoSelect = document.getElementById('batchNo');
+            const selectedLine = productionLineSelect.value;
+            const selectedBatchNo = batchNoSelect.value;
+            const modelInput = document.getElementById('model');
+
+            // Find the model for the selected Batch No
+            const selectedBatch = batchData[selectedLine].find(batch => batch.batchNo === selectedBatchNo);
+
+            // Update model input
+            modelInput.value = selectedBatch ? selectedBatch.model : '';
+        }
+
+        // Function to save the selected data
+        function saveData() {
+            const productionLine = document.getElementById('productionLine').value;
+            const batchNo = document.getElementById('batchNo').value;
+            const model = document.getElementById('model').value;
+
+            if (productionLine === '' || batchNo === '') {
+                alert('กรุณาเลือกข้อมูลให้ครบ');
+                return;
+            }
+
+            // Save logic here (you can modify to save data on the server or localStorage, for example)
+            alert(`บันทึกข้อมูล: Production Line: ${productionLine}, Batch No: ${batchNo}, Model: ${model}`);
+            window.location.href = 'index.html';
+            
+        }
+    </script>
+</body>
+</html>
